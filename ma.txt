@@ -1,0 +1,5 @@
+i mesa 10
+i cadeira 5
+i computador 1000
+i quadro 13
+i piano 200
