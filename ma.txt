@@ -1,5 +1,10 @@
-i mesa 10
-i cadeira 5
-i computador 1000
+i mesa 150
+i cadeira 15
+i computador 1200
 i quadro 13
-i piano 200
+i piano 300
+n 0 guitarra
+n 2 sofa
+p 1 30
+p 2 999
+p 4 500

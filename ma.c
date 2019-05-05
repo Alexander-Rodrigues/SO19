@@ -14,7 +14,13 @@ typedef void (*sighandler_t)(int);
 #define IDSIZE 4
 #define STRINGIDSIZE 4
 #define PRICESIZE 5
-#define ARTIGOSIZE IDSIZE+STRINGIDSIZE+PRICESIZE+3
+#define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3)
+
+void replaceFileContent(int fd, int offset, int size, char* artigo)//substitui o conteúdo no offset pretendido pelo conteúdo de artigo até ao size
+{
+	lseek(fd, offset, SEEK_SET);
+	write(fd, artigo, size);
+}
 
 void concatArtigosLine(int id, int idString, int price, char* artigo)//pega em id, idString e price e junta numa string artigo com formato "id idString price\n"
 {
@@ -44,7 +50,7 @@ void concatArtigosLine(int id, int idString, int price, char* artigo)//pega em i
 
 int countNewLines(int fd)//procura quantas mudanças de linha existem no ficheiro, serve para conhecer o id do artigo a inserir
 {
-	int counter=1;
+	int counter=0;
 	char buffer[1];
 
 	while(read(fd, buffer, 1)>0) if(buffer[0]=='\n') counter++;
@@ -72,7 +78,7 @@ int readToSpace(int fd, char* word)//lê o ficheiro até encontrar um espaço ou
 
 int findWordLine(int fd, char* word)//procura a word no ficheiro e retorna o número da linha em que se encontra
 {
-	int counter=0;
+	int counter=-1;
 	char* found = malloc(sizeof(char)*NAMESIZE+1);
 
 	do
@@ -87,11 +93,10 @@ int findWordLine(int fd, char* word)//procura a word no ficheiro e retorna o nú
 	return counter;
 }
 
-int readMaLine(int fd, char* command, char* name, char* price)//lê uma linha do formato do ficheiro ma.txt e guarda as respectivas variavéis com o que encontra
+int readMaLine(int fd, char* fst, char* snd)//lê uma linha do formato do ficheiro ma.txt e guarda as respectivas variavéis com o que encontra
 {
-	readToSpace(fd, command);
-	readToSpace(fd, name);
-	int readResult = readToSpace(fd, price);
+	readToSpace(fd, fst);
+	int readResult = readToSpace(fd, snd);
 
 	return readResult;
 }
@@ -104,32 +109,64 @@ int main(int argc, char* argv[])
 	char* name = malloc(sizeof(char)*NAMESIZE+1);
 	char* price = malloc(sizeof(char)*PRICESIZE+1);
 	char* artigo = malloc(sizeof(char)*ARTIGOSIZE+1);
+	char* id = malloc(sizeof(char)*IDSIZE+1);
 
 	int loop = 1;
 	while(loop)//lê linha do ficheiro ma.txt
 	{
-		if(readMaLine(fd, command, name, price)<=0) loop = 0;
+		readToSpace(fd, command);//lê o commando que vai ser usado na linha
 
-		int fdStrings = open("./STRINGS.txt", O_RDONLY|O_APPEND|O_CREAT, 0666);//abre STRINGS.txt para ler e transforma nome encontrado no id respetivo
-		if(fd<=0) {printf("Error opening STRINGS.txt file\n"); return -1;}
-		int idString = findWordLine(fdStrings, name);
+		if(!strcmp(command, "i"))
+		{
+			if(readMaLine(fd, name, price)<=0) loop = 0;
 
-		int fdArtigos = open("./ARTIGOS.txt", O_RDWR|O_APPEND|O_CREAT, 0666);//abre ARTIGOS.txt para escrever
-		if(fd<=0) {printf("Error opening ARTIGOS.txt file\n"); return -1;}
-		int id = countNewLines(fdArtigos);
+			int fdStrings = open("./STRINGS.txt", O_RDONLY|O_APPEND|O_CREAT, 0666);//abre STRINGS.txt para ler e transforma nome encontrado no id respetivo
+			if(fd<=0) {printf("Error opening STRINGS.txt file\n"); return -1;}
+			int idString = findWordLine(fdStrings, name);
 
-		concatArtigosLine(id, idString, atoi(price), artigo);//cria string do artigo e escreve em ARTIGOS.txt
-		write(fdArtigos, artigo, ARTIGOSIZE);
+			int fdArtigos = open("./ARTIGOS.txt", O_RDWR|O_APPEND|O_CREAT, 0666);//abre ARTIGOS.txt para ler e escrever
+			if(fd<=0) {printf("Error opening ARTIGOS.txt file\n"); return -1;}
+			int newId = countNewLines(fdArtigos);
+
+			concatArtigosLine(newId, idString, atoi(price), artigo);//cria string do artigo e escreve em ARTIGOS.txt
+			write(fdArtigos, artigo, ARTIGOSIZE);
+		}
+		else if(!strcmp(command, "n"))
+		{
+			if(readMaLine(fd, id, name)<=0) loop = 0;
+
+			int fdStrings = open("./STRINGS.txt", O_RDONLY|O_APPEND|O_CREAT, 0666);//abre STRINGS.txt para ler e transforma nome encontrado no id respetivo
+			if(fd<=0) {printf("Error opening STRINGS.txt file\n"); return -1;}
+			int idString = findWordLine(fdStrings, name);
+
+			int fdArtigos = open("./ARTIGOS.txt", O_RDWR|O_CREAT, 0666);//abre ARTIGOS.txt para ler e escrever
+			if(fd<=0) {printf("Error opening ARTIGOS.txt file\n"); return -1;}
+
+			concatArtigosLine(atoi(id), idString, 0, artigo);//cria string do artigo e escreve em ARTIGOS.txt o id do novo nome
+			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+1, STRINGIDSIZE, artigo+IDSIZE+1);
+		}
+		else if(!strcmp(command, "p"))
+		{
+			if(readMaLine(fd, id, price)<=0) loop = 0;
+
+			int fdArtigos = open("./ARTIGOS.txt", O_RDWR|O_CREAT, 0666);//abre ARTIGOS.txt para ler e escrever
+			if(fd<=0) {printf("Error opening ARTIGOS.txt file\n"); return -1;}
+
+			concatArtigosLine(atoi(id), 0, atoi(price), artigo);//cria string do artigo e escreve em ARTIGOS.txt o novo preco
+			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, artigo+IDSIZE+STRINGIDSIZE+2);
+		}
 
 		clearMem(command);
 		clearMem(name);
 		clearMem(price);
 		clearMem(artigo);
+		clearMem(id);
 	}
 
 	free(command);
 	free(name);
 	free(price);
 	free(artigo);
+	free(id);
 	return 0;
 }
