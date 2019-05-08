@@ -5,10 +5,12 @@
 #define PRICESIZE 5 //largura de um preco de artigo
 #define QUANTSIZE 4 //largura de uma quantidade como as do programa cv
 #define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3) //dois ' ' e um '\n', largura de um artigo
+#define VENDASIZE (IDSIZE+PRICESIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de uma venda
 #define STOCKSIZE (QUANTSIZE+1) //um ' ' e um '\n', largura de um stock
 #define PIDSIZE 4 //largura de uma quantidade como as do programa cv
 #define FIFOSIZE (PIDSIZE+9) //largura do fifo de um cliente, inclui "./fifo" no inicio
 #define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3)//dois ' ' e um '\n', largura de um argumento do programa cv
+
 
 void replaceFileContent(int fd, int offset, int size, char* artigo);
 char* fillZeros(int number, int size);
@@ -26,3 +28,5 @@ char* getClientFifo(int pid);
 void addNewLine(char* text);
 int getStock(char* id);
 int getPrice(char* id);
+void concatVendasLine(int id, int price, int quant, char* venda);
+int atualizaStock(char* id, char* quant);

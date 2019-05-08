@@ -90,6 +90,13 @@ char* initString(int size)//inicializa uma string com nada dentro
 	return buffer;
 }
 
+int openVendas(int flags)//abre o ficheiro VENDAS
+{
+	int fd = open("./VENDAS.txt", flags, 0666);
+	if(fd<=0) printf("Error opening VENDAS.txt file\n");
+	return fd;
+}
+
 int openStocks(int flags)//abre o ficheiro STOCKS
 {
 	int fd = open("./STOCKS.txt", flags, 0666);
@@ -152,7 +159,7 @@ void addNewLine(char* text)//adiciona uma mudança de linha no fim de uma string
 	free(buffer);
 }
 
-int getStock(char* id)
+int getStock(char* id)//obtém o stock do id respectivo
 {
 	int fd = openStocks(O_RDONLY); if(fd<=0) return -1;
 	char* stock = initString(QUANTSIZE);
@@ -164,7 +171,7 @@ int getStock(char* id)
 	return stockInt;
 }
 
-int getPrice(char* id)
+int getPrice(char* id)//obtém o preço do id respectivo
 {
 	int fd = openArtigos(O_RDONLY); if(fd<=0) return -1;
 	char* price = initString(PRICESIZE);
@@ -174,4 +181,54 @@ int getPrice(char* id)
 
 	free(price);
 	return priceInt;
+}
+
+void concatVendasLine(int id, int price, int quant, char* venda)//pega em id, price e quant e junta numa string venda com formato "id price quant\n"
+{
+	char* idS = fillZeros(id, IDSIZE);
+	char* priceS = fillZeros(price, PRICESIZE);
+	char* quantS = fillZeros(quant, QUANTSIZE);
+
+	char* space = strdup(" ");
+	char* newLine = strdup("\n");
+	venda = strcat(venda, idS);
+	venda = strcat(venda, space);
+	venda = strcat(venda, priceS);
+	venda = strcat(venda, space);
+	venda = strcat(venda, quantS);
+	venda = strcat(venda, newLine);
+
+	free(idS);
+	free(priceS);
+	free(quantS);
+	free(space);
+	free(newLine);
+}
+
+int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo da quantidade, se for positiva adiciona stock, se for negativa retira stock e também adiciona uma linha ao ficheiro VENDAS
+{
+	int stock = getStock(id);
+	stock = stock + atoi(quant); if(stock<0) return -1;
+
+	char* stockS = fillZeros(stock, QUANTSIZE);
+
+	int fd = openStocks(O_WRONLY); if(fd<=0) return -1;
+	replaceFileContent(fd, atoi(id)*STOCKSIZE, QUANTSIZE, stockS);
+
+	if(atoi(quant)<0)
+	{
+		int price = getPrice(id);
+		price = price * (-atoi(quant));
+
+		char* venda = initString(VENDASIZE);
+		concatVendasLine(atoi(id), price, -atoi(quant), venda);
+
+		fd = openVendas(O_WRONLY|O_APPEND|O_CREAT); if(fd<=0) return -1;
+		write(fd, venda, strlen(venda));
+
+		free(venda);
+	}
+
+	free(stockS);
+	return stock;
 }
