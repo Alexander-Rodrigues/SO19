@@ -10,39 +10,31 @@
 #include "functions.h"
 typedef void (*sighandler_t)(int);
 
-int splitArgs(char* arg, char** args)//separa string fornecida em argumentos diferentes, separados por ' '
-{
-	int counter = 0;
-	const char space[2] = " ";
-	char* token = strtok(arg, space);
-
-	while(token!=NULL)
-	{
-		args[counter] = token;
-		token = strtok(NULL, space);
-		counter++;
-	}
-
-	return counter;
-}
-
 int main(int argc, char* argv[])
 {
-	char* fifo = strdup("./fifo");
-	mkfifo(fifo, 0666);
-	int fd = open(fifo, O_RDONLY, 0666); if(fd<0) {printf("Error opening fifo\n"); return -1;}
+	int fd = initConnect(strdup("./fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
+	printf("Server running...\n");
 
 	while(1)
 	{
-		char* arg = initString(ARGSIZE);
+		char* arg = initString(ARGSIZE);//inicializar a string de argumentos
 		readUntil(fd, '\n', '\n', arg);
 
-		char** args = malloc(sizeof(char*)*2);
+		char** args = malloc(sizeof(char*)*2);//separar a string nos diferentes argumentos
 		int nArgs = splitArgs(arg, args);
 
-		for(int i=0;i<nArgs;i++) printf("Read %s\n", args[i]);
+		//calculos
+
+		int fdClient = initConnect(args[0]);//conectar ao fifo do cliente, o primeiro argumento é o nome do fifo
+		if(fdClient>0)
+		{
+			addNewLine(args[0]);
+			write(fdClient, args[0], strlen(args[0]));//enviar a resposta ao cliente
+		}
 
 		free(arg);
 		free(args);
 	}
+	
+	return 0;
 }

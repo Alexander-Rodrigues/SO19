@@ -97,3 +97,44 @@ int openArtigos(int flags)//abre o ficheiro ARTIGOS
 	if(fd<=0) printf("Error opening ARTIGOS.txt file\n");
 	return fd;
 }
+
+int initConnect(char* fifo)//inicializa uma conexão fifo
+{
+	mkfifo(fifo, 0666);
+	int fd = open(fifo, O_RDWR, 0666); if(fd<0) {printf("Error opening fifo\n"); return -1;}
+
+	return fd;
+}
+
+int splitArgs(char* arg, char** args)//separa string fornecida em argumentos diferentes, separados por ' '
+{
+	int counter = 0;
+	const char space[2] = " ";
+	char* token = strtok(arg, space);
+
+	while(token!=NULL)
+	{
+		args[counter] = token;
+		token = strtok(NULL, space);
+		counter++;
+	}
+
+	return counter;
+}
+
+char* getClientFifo(int pid)//obtém o fifo do cliente dado um inteiro que representa o seu pid
+{
+	char* fifo = initString(FIFOSIZE);
+	sprintf(fifo, "./fifo%d", pid);
+
+	return fifo;
+}
+
+void addNewLine(char* text)//adiciona uma mudança de linha no fim de uma string
+{
+	char* buffer = strdup("1");
+	buffer[0]='\n';
+	text = strcat(text, buffer);
+
+	free(buffer);
+}

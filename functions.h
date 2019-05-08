@@ -5,9 +5,10 @@
 #define PRICESIZE 5 //largura de um preco de artigo
 #define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3) //dois ' ' e um '\n', largura de um artigo
 
-#define FIFOSIZE 10 //largura do fifo de um cliente
 #define QUANTSIZE 4 //largura de uma quantidade como as do programa cv
-#define ARGSIZE (IDSIZE+QUANTSIZE+2)//um ' ' e um '\n', largura de um argumento do programa cv
+#define PIDSIZE 4 //largura de uma quantidade como as do programa cv
+#define FIFOSIZE (PIDSIZE+9) //largura do fifo de um cliente, inclui "./fifo" no inicio
+#define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3)//dois ' ' e um '\n', largura de um argumento do programa cv
 
 void replaceFileContent(int fd, int offset, int size, char* artigo);
 char* fillZeros(int number, int size);
@@ -18,3 +19,7 @@ int readUntil(int fd, char c1, char c2, char* text);
 char* initString(int size);
 int openStrings(int flags);
 int openArtigos(int flags);
+int initConnect();
+int splitArgs(char* arg, char** args);
+char* getClientFifo(int pid);
+void addNewLine(char* text);

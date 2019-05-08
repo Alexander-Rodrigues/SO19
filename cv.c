@@ -12,22 +12,27 @@ typedef void (*sighandler_t)(int);
 
 int main(int argc, char* argv[])
 {
-	char* fifo = strdup("./fifo");
-	mkfifo(fifo, 0666);
-	int fd = open(fifo, O_WRONLY, 0666); if(fd<0) {printf("Error opening fifo\n"); return -1;}
+	int fd = initConnect(strdup("./fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
+	char* fifoClient = getClientFifo(getpid());//obter fifo do cliente através do seu pid
+	int fdClient = initConnect(fifoClient); if(fdClient<0) {return -1;}//conectar ao fifo do cliente
+	printf("Connected!\n");
 
 	while(1)
 	{
-		char* arg = initString(ARGSIZE);
-		readUntil(0, '\n', '\n', arg);
+		char* arg = initString(ARGSIZE);//inicializar a string de argumentos
+		sprintf(arg, "%s ", fifoClient);//colocar o fifo do cliente como primeiro argumento
+		readUntil(0, '\n', '\n', arg);//ler resto dos argumentos
+		addNewLine(arg);//finalizar argumentos com uma mudança de linha
 
-		char* buffer = strdup("1");
-		buffer[0]='\n';
-		arg = strcat(arg, buffer);
-		
-		write(fd, arg, strlen(arg));
+		write(fd, arg, strlen(arg));//enviar a string de argumentos ao servidor
 
-		free(buffer);
+		char* resp = initString(FIFOSIZE);//inicializar a string de resposta
+		readUntil(fdClient, '\n', '\n', resp);//ler resposta do servidor
+		printf("%s\n", resp);//imprimir resposta
+
+		free(resp);
 		free(arg);
 	}
+
+	free(fifoClient);
 }
