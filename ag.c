@@ -66,7 +66,7 @@ off_t getPos(int fd, char* id) {
 }
 
 //Replaces the values at pos with the ones at in using s as a string buffer;
-void fReplace(int fd, FILE* f, off_t pos, int* in, char** s) {
+void replace(int fd, off_t pos, int* in, char** s) {
 	
 	lseek(fd,pos,SEEK_SET);
 	int old[3];
@@ -79,29 +79,26 @@ void fReplace(int fd, FILE* f, off_t pos, int* in, char** s) {
 	in[1] += old[1];
 	in[2] += old[2];
 	
-	char c[LINE + 1];
 	sprintf(s[1],"%0*d", PRICE, in[1]);
 	sprintf(s[2],"%0*d", QTD, in[2]);
 	
-	fseek(f,pos,SEEK_SET);
-	fwrite(s[0],1,ID,f);
-	fwrite(" ",1,1,f);
-	fwrite(s[1],1,PRICE,f);
-	fwrite(" ",1,1,f);
-	fwrite(s[2],1,QTD,f);
-	fwrite("\n",1,1,f);
+	lseek(fd,pos,SEEK_SET);
+	write(fd, s[0], ID);
+	write(fd, " ", 1);
+	write(fd, s[1], PRICE);
+	write(fd, " ", 1);
+	write(fd, s[2], QTD);
+	write(fd, "\n", 1);
 	
 }
 
 //Reads each line from stdin and for each one searches for its values in the tmp file inserting them;
 int main(int argc, char* argv[]) {
-	//sprintf(buf,"%0*d\n", ID, 36182);
 	int fd = open("tmp", O_CREAT | O_RDWR, 0666);
 	if (fd < 0) {
 		perror("Error opening file");
 		return fd;
 	}
-	FILE *f = fdopen(fd, "r+");
 
 	char** inS = malloc(sizeof(char*)*3);
 	inS[0] = malloc(sizeof(char) * ID);
@@ -112,8 +109,8 @@ int main(int argc, char* argv[]) {
 	int i = 0;
 	while (readLnC(0, inS, intNew) > 0) {
 		int pos = getPos(fd,inS[0]);
-		fReplace(fd, f,pos, intNew, inS);
-		fseek(f,0,SEEK_END);
+		replace(fd, pos, intNew, inS);
+		lseek(fd,0,SEEK_END);
 		i++;
 	}
 	
