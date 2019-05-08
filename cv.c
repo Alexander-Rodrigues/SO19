@@ -26,11 +26,11 @@ int main(int argc, char* argv[])
 
 		write(fd, arg, strlen(arg));//enviar a string de argumentos ao servidor
 
-		char* resp = initString(FIFOSIZE);//inicializar a string de resposta
-		readUntil(fdClient, '\n', '\n', resp);//ler resposta do servidor
-		printf("%s\n", resp);//imprimir resposta
+		char* res = initString(FIFOSIZE);//inicializar a string de resposta
+		readUntil(fdClient, '\n', '\n', res);//ler resposta do servidor
+		printf("%s\n", res);//imprimir resposta
 
-		free(resp);
+		free(res);
 		free(arg);
 	}
 

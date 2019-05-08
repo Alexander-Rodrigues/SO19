@@ -10,6 +10,12 @@
 #include "functions.h"
 typedef void (*sighandler_t)(int);
 
+void getFileContent(int fd, int offset, int size, char* text)//substitui o conteúdo no offset pretendido pelo conteúdo de text até ao size, offset é onde começa a substituição, size é o tamanho da string por substituir e text é a string em si
+{
+	lseek(fd, offset, SEEK_SET);
+	read(fd, text, size);
+}
+
 void replaceFileContent(int fd, int offset, int size, char* text)//substitui o conteúdo no offset pretendido pelo conteúdo de text até ao size, offset é onde começa a substituição, size é o tamanho da string por substituir e text é a string em si
 {
 	lseek(fd, offset, SEEK_SET);
@@ -56,7 +62,7 @@ int findWordLine(int fd, char* word)//procura a word no ficheiro e retorna o nú
 	do
 	{
 		clearMem(found);
-		readUntil(fd, '\n', '\n', found);
+		readUntil(fd, ' ', '\n', found);
 		counter++;
 	}
 	while(strcmp(word, found));
@@ -82,6 +88,13 @@ char* initString(int size)//inicializa uma string com nada dentro
 	buffer[0]='\0';
 
 	return buffer;
+}
+
+int openStocks(int flags)//abre o ficheiro STOCKS
+{
+	int fd = open("./STOCKS.txt", flags, 0666);
+	if(fd<=0) printf("Error opening STOCKS.txt file\n");
+	return fd;
 }
 
 int openStrings(int flags)//abre o ficheiro STRINGS
@@ -137,4 +150,28 @@ void addNewLine(char* text)//adiciona uma mudança de linha no fim de uma string
 	text = strcat(text, buffer);
 
 	free(buffer);
+}
+
+int getStock(char* id)
+{
+	int fd = openStocks(O_RDONLY); if(fd<=0) return -1;
+	char* stock = initString(QUANTSIZE);
+
+	getFileContent(fd, atoi(id)*STOCKSIZE, QUANTSIZE, stock);
+	int stockInt = atoi(stock);
+
+	free(stock);
+	return stockInt;
+}
+
+int getPrice(char* id)
+{
+	int fd = openArtigos(O_RDONLY); if(fd<=0) return -1;
+	char* price = initString(PRICESIZE);
+
+	getFileContent(fd, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, price);
+	int priceInt = atoi(price);
+
+	free(price);
+	return priceInt;
 }

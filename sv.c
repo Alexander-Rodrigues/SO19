@@ -23,15 +23,20 @@ int main(int argc, char* argv[])
 		char** args = malloc(sizeof(char*)*2);//separar a string nos diferentes argumentos
 		int nArgs = splitArgs(arg, args);
 
-		//calculos
+		char* res = initString(7+QUANTSIZE+1+7+PRICESIZE+1);
+		if(nArgs==2)
+		{
+			int stock = getStock(args[1]);
+			int preco = getPrice(args[1]);
+			if(stock>=0 && preco>=0) sprintf(res, "Stock: %d, Price: %d\n", stock, preco);
+			else sprintf(res, "Error, try again!\n");
+		}
+		else if(nArgs==3) ;
 
 		int fdClient = initConnect(args[0]);//conectar ao fifo do cliente, o primeiro argumento é o nome do fifo
-		if(fdClient>0)
-		{
-			addNewLine(args[0]);
-			write(fdClient, args[0], strlen(args[0]));//enviar a resposta ao cliente
-		}
+		if(fdClient>0) write(fdClient, res, strlen(res));//enviar a resposta ao cliente
 
+		free(res);
 		free(arg);
 		free(args);
 	}
