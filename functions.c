@@ -93,29 +93,29 @@ char* initString(int size)//inicializa uma string com nada dentro
 
 int openVendas(int flags)//abre o ficheiro VENDAS
 {
-	int fd = open("./VENDAS.txt", flags, 0666);
-	if(fd<=0) printf("Error opening VENDAS.txt file\n");
+	int fd = open("./files/VENDAS", flags, 0666);
+	if(fd<=0) printf("Error opening VENDAS file\n");
 	return fd;
 }
 
 int openStocks(int flags)//abre o ficheiro STOCKS
 {
-	int fd = open("./STOCKS.txt", flags, 0666);
-	if(fd<=0) printf("Error opening STOCKS.txt file\n");
+	int fd = open("./files/STOCKS", flags, 0666);
+	if(fd<=0) printf("Error opening STOCKS file\n");
 	return fd;
 }
 
 int openStrings(int flags)//abre o ficheiro STRINGS
 {
-	int fd = open("./STRINGS.txt", flags, 0666);
-	if(fd<=0) printf("Error opening STRINGS.txt file\n");
+	int fd = open("./files/STRINGS", flags, 0666);
+	if(fd<=0) printf("Error opening STRINGS file\n");
 	return fd;
 }
 
 int openArtigos(int flags)//abre o ficheiro ARTIGOS
 {
-	int fd = open("./ARTIGOS.txt", flags, 0666);
-	if(fd<=0) printf("Error opening ARTIGOS.txt file\n");
+	int fd = open("./files/ARTIGOS", flags, 0666);
+	if(fd<=0) printf("Error opening ARTIGOS file\n");
 	return fd;
 }
 
@@ -146,7 +146,7 @@ int splitArgs(char* arg, char** args)//separa string fornecida em argumentos dif
 char* getClientFifo(int pid)//obtém o fifo do cliente dado um inteiro que representa o seu pid
 {
 	char* fifo = initString(FIFOSIZE);
-	sprintf(fifo, "./fifo%d", pid);
+	sprintf(fifo, "./fifo/fifo%d", pid);
 
 	return fifo;
 }
@@ -166,6 +166,7 @@ int getStock(char* id)//obtém o stock do id respectivo
 	char* stock = initString(QUANTSIZE);
 
 	getFileContent(fd, atoi(id)*STOCKSIZE, QUANTSIZE, stock);
+	close(fd);
 	int stockInt = atoi(stock);
 
 	free(stock);
@@ -178,6 +179,7 @@ int getPrice(char* id)//obtém o preço do id respectivo
 	char* price = initString(PRICESIZE);
 
 	getFileContent(fd, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, price);
+	close(fd);
 	int priceInt = atoi(price);
 
 	free(price);
@@ -215,6 +217,7 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 
 	int fd = openStocks(O_WRONLY); if(fd<=0) return -1;
 	replaceFileContent(fd, atoi(id)*STOCKSIZE, QUANTSIZE, stockS);
+	close(fd);
 
 	if(atoi(quant)<0)
 	{
@@ -226,6 +229,7 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 
 		fd = openVendas(O_WRONLY|O_APPEND|O_CREAT); if(fd<=0) return -1;
 		write(fd, venda, strlen(venda));
+		close(fd);
 
 		free(venda);
 	}

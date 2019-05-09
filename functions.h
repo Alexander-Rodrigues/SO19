@@ -7,8 +7,8 @@
 #define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3) //dois ' ' e um '\n', largura de um artigo
 #define VENDASIZE (IDSIZE+PRICESIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de uma venda
 #define STOCKSIZE (QUANTSIZE+1) //um ' ' e um '\n', largura de um stock
-#define PIDSIZE 4 //largura de uma quantidade como as do programa cv
-#define FIFOSIZE (PIDSIZE+9) //largura do fifo de um cliente, inclui "./fifo" no inicio
+#define PIDSIZE 4 //largura do pid de um cliente
+#define FIFOSIZE (PIDSIZE+6) //largura do fifo de um cliente, inclui "./fifo/fifo" no inicio
 #define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3)//dois ' ' e um '\n', largura de um argumento do programa cv
 
 

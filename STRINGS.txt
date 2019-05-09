@@ -1,7 +1,0 @@
-cadeira
-computador
-mesa
-guitarra
-piano
-quadro
-sofa

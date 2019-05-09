@@ -62,19 +62,22 @@ int main(int argc, char* argv[])
 				int fdStrings = openStrings(O_RDWR|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
 				idString = findWordLine(fdStrings, name);//determina id do nome
 				if(idString<0) {write(fdStrings, name, strlen(name)); write(fdStrings, "\n", 1);}//escreve novo nome caso não seja encontrado
+				close(fdStrings);
 			}
 
 			int fdArtigos = openArtigos(O_RDWR|O_APPEND|O_CREAT); if(fdArtigos<0) return fdArtigos;
 			int newId = countNewLines(fdArtigos);//determina id do artigo
 
 			concatArtigosLine(newId, idString, atoi(price), artigo);//cria string do artigo
-			write(fdArtigos, artigo, ARTIGOSIZE);//escreve o novo artigo em ARTIGOS.txt
+			write(fdArtigos, artigo, ARTIGOSIZE);//escreve o novo artigo em ARTIGOS
+			close(fdArtigos);
 
 			int fdStocks = openStocks(O_WRONLY|O_APPEND|O_CREAT); if(fdStocks<0) return fdStocks;
 
 			char* stockS = fillZeros(0, QUANTSIZE);
 			addNewLine(stockS);
-			write(fdStocks, stockS, STOCKSIZE);//adiciona o novo artigo ao STOCKS.txt com quantidade 0
+			write(fdStocks, stockS, STOCKSIZE);//adiciona o novo artigo ao STOCKS com quantidade 0
+			close(fdStocks);
 
 			free(stockS);
 		}
@@ -88,12 +91,14 @@ int main(int argc, char* argv[])
 				int fdStrings = openStrings(O_RDWR|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
 				idString = findWordLine(fdStrings, name);//determina id do nome
 				if(idString<0) {write(fdStrings, name, strlen(name)); write(fdStrings, "\n", 1);}//escreve novo nome caso não seja encontrado
+				close(fdStrings);
 			}
 
 			int fdArtigos = openArtigos(O_RDWR|O_CREAT); if(fdArtigos<0) return fdArtigos;
 
 			concatArtigosLine(atoi(id), idString, 0, artigo);//cria string do artigo
-			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+1, STRINGIDSIZE, artigo+IDSIZE+1);//escreve em ARTIGOS.txt o id do novo nome
+			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+1, STRINGIDSIZE, artigo+IDSIZE+1);//escreve em ARTIGOS o id do novo nome
+			close(fdArtigos);
 		}
 		else if(!strcmp(command, "p"))
 		{
@@ -102,7 +107,8 @@ int main(int argc, char* argv[])
 			int fdArtigos = openArtigos(O_RDWR|O_CREAT); if(fdArtigos<0) return fdArtigos;
 
 			concatArtigosLine(atoi(id), 0, atoi(price), artigo);//cria string do artigo
-			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, artigo+IDSIZE+STRINGIDSIZE+2);//escreve em ARTIGOS.txt o novo preco
+			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, artigo+IDSIZE+STRINGIDSIZE+2);//escreve em ARTIGOS o novo preco
+			close(fdArtigos);
 		}
 
 		free(command);

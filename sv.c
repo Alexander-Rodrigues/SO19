@@ -12,7 +12,7 @@ typedef void (*sighandler_t)(int);
 
 int main(int argc, char* argv[])
 {
-	int fd = initConnect(strdup("./fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
+	int fd = initConnect(strdup("./fifo/fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
 	printf("Server running...\n");
 
 	while(1)
@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 		char** args = malloc(sizeof(char*)*2);//separar a string nos diferentes argumentos
 		int nArgs = splitArgs(arg, args);
 
-		char* res = initString(7+QUANTSIZE+1+7+PRICESIZE+1);//inicializar a string de resposta
+		char* res = initString(QUANTSIZE+PRICESIZE+20);//inicializar a string de resposta
 		if(nArgs==2)
 		{
 			int stock = getStock(args[1]);//obtém o stock do id respectivo
@@ -37,9 +37,14 @@ int main(int argc, char* argv[])
 			if(stock>=0) sprintf(res, "New Stock: %d\n", stock);//guarda resultado em res
 			else sprintf(res, "Error, try again!\n");
 		}
+		else
+		{
+			sprintf(res, "Error, try again!\n");
+		}
 
 		int fdClient = initConnect(args[0]);//conectar ao fifo do cliente, o primeiro argumento é o nome do fifo
 		if(fdClient>0) write(fdClient, res, strlen(res));//enviar a resposta ao cliente
+		close(fdClient);
 
 		free(res);
 		free(arg);

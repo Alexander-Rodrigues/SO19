@@ -12,16 +12,17 @@ typedef void (*sighandler_t)(int);
 
 int main(int argc, char* argv[])
 {
-	int fd = initConnect(strdup("./fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
+	int fd = initConnect(strdup("./fifo/fifo")); if(fd<0) {return -1;}//conectar ao fifo do servidor
 	char* fifoClient = getClientFifo(getpid());//obter fifo do cliente através do seu pid
 	int fdClient = initConnect(fifoClient); if(fdClient<0) {return -1;}//conectar ao fifo do cliente
 	printf("Connected!\n");
 
-	while(1)
+	int loop=1;
+	while(loop)
 	{
 		char* arg = initString(ARGSIZE);//inicializar a string de argumentos
 		sprintf(arg, "%s ", fifoClient);//colocar o fifo do cliente como primeiro argumento
-		readUntil(0, '\n', '\n', arg);//ler resto dos argumentos
+		if(readUntil(0, '\n', '\n', arg)<=0) loop=0;//ler resto dos argumentos
 		addNewLine(arg);//finalizar argumentos com uma mudança de linha
 
 		write(fd, arg, strlen(arg));//enviar a string de argumentos ao servidor
