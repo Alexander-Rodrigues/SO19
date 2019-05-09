@@ -42,38 +42,53 @@ int readMaLine(int fd, char* fst, char* snd)//lê uma linha do formato do fichei
 
 int main(int argc, char* argv[])
 {
-	int fd = open("./ma.txt", O_RDONLY|O_APPEND, 0666);//abre ma.txt para ler e prepara strings de leitura
-	if(fd<=0) {printf("Error opening ma.txt file, there should be an ma.txt to process\n"); return -1;}
-	char* command = initString(COMMANDSIZE);
-	char* name = initString(NAMESIZE);
-	char* price = initString(PRICESIZE);
-	char* artigo = initString(ARTIGOSIZE);
-	char* id = initString(IDSIZE);
-
 	int loop = 1;
-	while(loop)//lê linha do ficheiro ma.txt
+	while(loop)//lê linhas do stdin
 	{
-		readUntil(fd, ' ', '\n', command);//lê o commando que vai ser usado na linha
+		char* command = initString(COMMANDSIZE);
+		char* name = initString(NAMESIZE);
+		char* price = initString(PRICESIZE);
+		char* artigo = initString(ARTIGOSIZE);
+		char* id = initString(IDSIZE);
 
+		readUntil(0, ' ', '\n', command);//lê o commando que vai ser usado na linha
 		if(!strcmp(command, "i"))
 		{
-			if(readMaLine(fd, name, price)<=0) loop = 0;
+			if(readMaLine(0, name, price)<=0) loop = 0;
 
-			int fdStrings = openStrings(O_RDONLY|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
-			int idString = findWordLine(fdStrings, name);//determina id do nome
+			int idString = -1;
+			while(idString<0)
+			{
+				int fdStrings = openStrings(O_RDWR|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
+				idString = findWordLine(fdStrings, name);//determina id do nome
+				if(idString<0) {write(fdStrings, name, strlen(name)); write(fdStrings, "\n", 1);}//escreve novo nome caso não seja encontrado
+			}
 
 			int fdArtigos = openArtigos(O_RDWR|O_APPEND|O_CREAT); if(fdArtigos<0) return fdArtigos;
 			int newId = countNewLines(fdArtigos);//determina id do artigo
 
 			concatArtigosLine(newId, idString, atoi(price), artigo);//cria string do artigo
-			write(fdArtigos, artigo, ARTIGOSIZE);//escreve artigo em ARTIGOS.txt
+			write(fdArtigos, artigo, ARTIGOSIZE);//escreve o novo artigo em ARTIGOS.txt
+
+			int fdStocks = openStocks(O_WRONLY|O_APPEND|O_CREAT); if(fdStocks<0) return fdStocks;
+
+			char* stockS = fillZeros(0, QUANTSIZE);
+			addNewLine(stockS);
+			write(fdStocks, stockS, STOCKSIZE);//adiciona o novo artigo ao STOCKS.txt com quantidade 0
+
+			free(stockS);
 		}
 		else if(!strcmp(command, "n"))
 		{
-			if(readMaLine(fd, id, name)<=0) loop = 0;
+			if(readMaLine(0, id, name)<=0) loop = 0;
 
-			int fdStrings = openStrings(O_RDONLY|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
-			int idString = findWordLine(fdStrings, name);//determina id do nome
+			int idString = -1;
+			while(idString<0)
+			{
+				int fdStrings = openStrings(O_RDWR|O_APPEND|O_CREAT); if(fdStrings<0) return fdStrings;
+				idString = findWordLine(fdStrings, name);//determina id do nome
+				if(idString<0) {write(fdStrings, name, strlen(name)); write(fdStrings, "\n", 1);}//escreve novo nome caso não seja encontrado
+			}
 
 			int fdArtigos = openArtigos(O_RDWR|O_CREAT); if(fdArtigos<0) return fdArtigos;
 
@@ -82,7 +97,7 @@ int main(int argc, char* argv[])
 		}
 		else if(!strcmp(command, "p"))
 		{
-			if(readMaLine(fd, id, price)<=0) loop = 0;
+			if(readMaLine(0, id, price)<=0) loop = 0;
 
 			int fdArtigos = openArtigos(O_RDWR|O_CREAT); if(fdArtigos<0) return fdArtigos;
 
@@ -90,17 +105,12 @@ int main(int argc, char* argv[])
 			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, artigo+IDSIZE+STRINGIDSIZE+2);//escreve em ARTIGOS.txt o novo preco
 		}
 
-		clearMem(command);
-		clearMem(name);
-		clearMem(price);
-		clearMem(artigo);
-		clearMem(id);
+		free(command);
+		free(name);
+		free(price);
+		free(artigo);
+		free(id);
 	}
 
-	free(command);
-	free(name);
-	free(price);
-	free(artigo);
-	free(id);
 	return 0;
 }

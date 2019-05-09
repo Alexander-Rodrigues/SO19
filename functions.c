@@ -56,19 +56,20 @@ void clearMem(char* buffer)//limpa o buffer
 
 int findWordLine(int fd, char* word)//procura a word no ficheiro e retorna o número da linha em que se encontra
 {
-	int counter=-1;
+	int counter = -1;
+	int readResult = -1;
 	char* found = initString(NAMESIZE);
 
 	do
 	{
 		clearMem(found);
-		readUntil(fd, ' ', '\n', found);
+		readResult = readUntil(fd, ' ', '\n', found);
 		counter++;
 	}
-	while(strcmp(word, found));
+	while(strcmp(word, found) && readResult>0);
 
 	free(found);
-	return counter;
+	if(readResult<=0) return -1; else return counter;
 }
 
 int readUntil(int fd, char c1, char c2, char* text)//lê o ficheiro até encontrar um dos caracteres escolhidos, coloca o que encontrar em text

@@ -19,7 +19,7 @@ void clearMem(char* buffer);
 int findWordLine(int fd, char* word);
 int readUntil(int fd, char c1, char c2, char* text);
 char* initString(int size);
-int openSTOCKS(int flags);
+int openStocks(int flags);
 int openStrings(int flags);
 int openArtigos(int flags);
 int initConnect();

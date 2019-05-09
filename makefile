@@ -4,4 +4,4 @@ make:
 	gcc -o cv cv.c functions.c
 
 clean:
-	rm -f ma sv cv fifo* ARTIGOS.txt VENDAS.txt
+	rm -f ma sv cv fifo* ARTIGOS.txt VENDAS.txt STOCKS.txt STRINGS.txt
