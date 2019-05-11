@@ -8,18 +8,10 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
-
-
 #include <limits.h>
 #include <float.h>
+#include "functions.h"
 typedef void(*sighandler_t)(int);
-
-#define COMMANDSIZE 1
-#define NAMESIZE 80
-#define ID 5
-#define PRICE 4
-#define QTD 3
-#define LINE ID + 1 + PRICE + 1 + QTD + 1
 
 void freeC(char** c){
 	free(c[0]);
@@ -30,11 +22,11 @@ void freeC(char** c){
 //Reads a line in the format, storing the values in the given params
 int readLnC(int fd, char** inS, int* in) {	
 	
-	read(fd, inS[0], ID);
+	read(fd, inS[0], IDSIZE);
 	lseek(fd, 1, SEEK_CUR);
-	read(fd, inS[1], PRICE);
+	read(fd, inS[1], PRICESIZE);
 	lseek(fd, 1, SEEK_CUR);
-	int r = read(fd, inS[2], QTD);
+	int r = read(fd, inS[2], QUANTSIZE);
 	lseek(fd, 1, SEEK_CUR);
 
 	in[0] = atoi(inS[0]);
@@ -52,14 +44,14 @@ off_t getPos(int fd, char* id) {
 	off_t r = 0;
 	while(r < end){
 		lseek(fd,r,SEEK_SET);
-		char* c = malloc(sizeof(char)* ID);
-		read(fd,c,ID);
+		char* c = malloc(sizeof(char)* IDSIZE);
+		read(fd,c,IDSIZE);
 		if (strcmp(c,id) == 0) {
 			
 			return r;
 			lseek(fd,0,SEEK_SET);
 		}
-		r += LINE;
+		r += AGRSIZE;
 	}
 	return r;
 	lseek(fd,0,SEEK_SET);
@@ -72,22 +64,22 @@ void replace(int fd, off_t pos, int* in, char** s) {
 	int old[3];
 	old[1] = 0;
 	old[2] = 0;
-	sprintf(s[1],"%0*d", PRICE, 0);
-	sprintf(s[2],"%0*d", QTD, 0);
+	sprintf(s[1],"%0*d", PRICESIZE, 0);
+	sprintf(s[2],"%0*d", QUANTSIZE, 0);
 	readLnC(fd, s, old);
 	
 	in[1] += old[1];
 	in[2] += old[2];
 	
-	sprintf(s[1],"%0*d", PRICE, in[1]);
-	sprintf(s[2],"%0*d", QTD, in[2]);
+	sprintf(s[1],"%0*d", PRICESIZE, in[1]);
+	sprintf(s[2],"%0*d", QUANTSIZE, in[2]);
 	
 	lseek(fd,pos,SEEK_SET);
-	write(fd, s[0], ID);
+	write(fd, s[0], IDSIZE);
 	write(fd, " ", 1);
-	write(fd, s[1], PRICE);
+	write(fd, s[1], PRICESIZE);
 	write(fd, " ", 1);
-	write(fd, s[2], QTD);
+	write(fd, s[2], QUANTSIZE);
 	write(fd, "\n", 1);
 	
 }
@@ -101,9 +93,9 @@ int main(int argc, char* argv[]) {
 	}
 
 	char** inS = malloc(sizeof(char*)*3);
-	inS[0] = malloc(sizeof(char) * ID);
-	inS[1] = malloc(sizeof(char) * PRICE);
-	inS[2] = malloc(sizeof(char) * QTD);
+	inS[0] = malloc(sizeof(char) * IDSIZE);
+	inS[1] = malloc(sizeof(char) * PRICESIZE);
+	inS[2] = malloc(sizeof(char) * QUANTSIZE);
 
 	int intNew[3];
 	int i = 0;
@@ -114,9 +106,9 @@ int main(int argc, char* argv[]) {
 		i++;
 	}
 	
-	char c[LINE];
+	char c[AGRSIZE];
 	lseek(fd,0L, SEEK_SET);
-	while (read(fd,c,LINE) > 0){
+	while (read(fd,c,AGRSIZE) > 0){
 		printf("%s",c);
 	}
 	if (remove("tmp") < 0) {

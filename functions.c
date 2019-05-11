@@ -86,7 +86,7 @@ int readUntil(int fd, char c1, char c2, char* text)//lê o ficheiro até encontr
 char* initString(int size)//inicializa uma string com nada dentro
 {
 	char* buffer = malloc(sizeof(char)*size+1);
-	buffer[0]='\0';
+	for(int i=0; i<=size; i++) buffer[i]='\0';
 
 	return buffer;
 }
@@ -215,9 +215,9 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 
 	char* stockS = fillZeros(stock, QUANTSIZE);
 
-	int fd = openStocks(O_WRONLY); if(fd<=0) return -1;
-	replaceFileContent(fd, atoi(id)*STOCKSIZE, QUANTSIZE, stockS);
-	close(fd);
+	int fdStocks = openStocks(O_WRONLY); if(fdStocks<=0) return -1;
+	replaceFileContent(fdStocks, atoi(id)*STOCKSIZE, QUANTSIZE, stockS);
+	close(fdStocks);
 
 	if(atoi(quant)<0)
 	{
@@ -227,9 +227,9 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 		char* venda = initString(VENDASIZE);
 		concatVendasLine(atoi(id), price, -atoi(quant), venda);
 
-		fd = openVendas(O_WRONLY|O_APPEND|O_CREAT); if(fd<=0) return -1;
-		write(fd, venda, strlen(venda));
-		close(fd);
+		int fdVendas = openVendas(O_WRONLY|O_APPEND|O_CREAT); if(fdVendas<=0) return -1;
+		write(fdVendas, venda, strlen(venda));
+		close(fdVendas);
 
 		free(venda);
 	}

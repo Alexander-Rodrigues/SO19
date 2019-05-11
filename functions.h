@@ -1,16 +1,16 @@
 #define COMMANDSIZE 1 //largura de um comando como os do programa ma, "i", "n", "p"...
-#define IDSIZE 4 //largura de um id de artigo
+#define IDSIZE 10 //largura de um id de artigo
+#define PRICESIZE 10 //largura de um preco de artigo
+#define QUANTSIZE 10 //largura de uma quantidade como as do programa cv
 #define NAMESIZE 80 //largura de um nome de artigo
-#define STRINGIDSIZE 4 //largura de um id de uma string referente ao nome
-#define PRICESIZE 5 //largura de um preco de artigo
-#define QUANTSIZE 4 //largura de uma quantidade como as do programa cv
+#define STRINGIDSIZE 10 //largura de um id de uma string referente ao nome
 #define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3) //dois ' ' e um '\n', largura de um artigo
 #define VENDASIZE (IDSIZE+PRICESIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de uma venda
 #define STOCKSIZE (QUANTSIZE+1) //um ' ' e um '\n', largura de um stock
-#define PIDSIZE 4 //largura do pid de um cliente
-#define FIFOSIZE (PIDSIZE+6) //largura do fifo de um cliente, inclui "./fifo/fifo" no inicio
-#define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3)//dois ' ' e um '\n', largura de um argumento do programa cv
-
+#define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de um argumento do programa cv
+#define AGRSIZE (IDSIZE+1+PRICESIZE+1+QUANTSIZE+2) //largura de um agregador
+#define PIDSIZE 10 //largura do pid de um cliente
+#define FIFOSIZE (PIDSIZE+11) //largura do fifo de um cliente, inclui "./fifo/fifo" no inicio
 
 void replaceFileContent(int fd, int offset, int size, char* artigo);
 char* fillZeros(int number, int size);

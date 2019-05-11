@@ -23,7 +23,7 @@ int main(int argc, char* argv[])
 		char** args = malloc(sizeof(char*)*2);//separar a string nos diferentes argumentos
 		int nArgs = splitArgs(arg, args);
 
-		char* res = initString(QUANTSIZE+PRICESIZE+20);//inicializar a string de resposta
+		char* res = initString(QUANTSIZE+PRICESIZE+30);//inicializar a string de resposta
 		if(nArgs==2)
 		{
 			int stock = getStock(args[1]);//obtém o stock do id respectivo
