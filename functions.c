@@ -237,3 +237,41 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 	free(stockS);
 	return stock;
 }
+
+int callAg(char* res, int* offset)//corre o programa ag abrindo o ficheiro VENDAS com o dado offset e guarda o resultado em res
+{
+	int status = 0;
+	int fd2[2];
+	pipe(fd2);
+	int pid = fork();
+
+	if(!pid)//filho
+	{
+		int fdVendas = openVendas(O_RDONLY|O_CREAT);
+		lseek(fdVendas, *offset, SEEK_SET);
+		dup2(fdVendas,0);//torna o file descriptor do ficheiro VENDAS no input, assim o seu conteúdo é processado pelo programa ag
+		close(fdVendas);
+
+		close(fd2[0]);//torna o pipe write no output, assim envia o resultado ao processo pai
+		dup2(fd2[1],1);
+		close(fd2[1]);
+
+		execl("./ag", "./ag", NULL);
+		_exit(-1);//error
+	}
+	else//pai
+	{
+		close(fd2[1]);
+		wait(&status);
+		if(WIFEXITED(status)) {int exitcode = WEXITSTATUS(status); if(exitcode==-1) return 0;}//tratar de erros do processo filho
+		readUntil(fd2[0],'v','v', res);//escreve em res o resultado que veio do processo filho
+
+		int fdVendas = openVendas(O_RDONLY|O_CREAT);
+		*offset = lseek(fdVendas, 0, SEEK_END);
+		close(fdVendas);
+
+		close(fd2[0]);
+	}
+
+	return 1;
+}

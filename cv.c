@@ -27,7 +27,7 @@ int main(int argc, char* argv[])
 
 		write(fd, arg, strlen(arg));//enviar a string de argumentos ao servidor
 
-		char* res = initString(QUANTSIZE+PRICESIZE+30);//inicializar a string de resposta
+		char* res = initString(RESSIZE);//inicializar a string de resposta
 		readUntil(fdClient, '\n', '\n', res);//ler resposta do servidor
 		printf("%s\n", res);//imprimir resposta
 

@@ -110,6 +110,21 @@ int main(int argc, char* argv[])
 			replaceFileContent(fdArtigos, atoi(id)*ARTIGOSIZE+IDSIZE+STRINGIDSIZE+2, PRICESIZE, artigo+IDSIZE+STRINGIDSIZE+2);//escreve em ARTIGOS o novo preco
 			close(fdArtigos);
 		}
+		else if(!strcmp(command, "a"))
+		{
+			int fd = initConnect("./fifo/fifo"); if(fd<0) {return fd;}//conectar ao fifo do servidor
+			int fdMa = initConnect("./fifo/fifoma"); if(fdMa<0) {return fdMa;}//conectar ao fifo do ma
+
+			write(fd, "./fifo/fifoma ag\n", strlen("./fifo/fifoma ag\n"));
+			close(fd);
+
+			char* res = initString(RESSIZE);//inicializar a string de resposta
+			readUntil(fdMa, 'v', 'v', res);//ler resposta do servidor, a resposta acaba com um caracter 'v'
+			close(fdMa);
+			printf("%s\n", res);//imprimir resposta
+
+			free(res);
+		}
 
 		free(command);
 		free(name);
