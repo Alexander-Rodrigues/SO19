@@ -86,7 +86,9 @@ void replace(int fd, off_t pos, int* in, char** s) {
 
 //Reads each line from stdin and for each one searches for its values in the tmp file inserting them;
 int main(int argc, char* argv[]) {
-	int fd = open("tmp", O_CREAT | O_RDWR, 0666);
+	char* fileName = malloc(sizeof(char) * 8);
+	sprintf(fileName,"%d",getpid());
+	int fd = open(fileName, O_CREAT | O_RDWR, 0666);
 	if (fd < 0) {
 		perror("Error opening file");
 		return fd;
@@ -111,10 +113,11 @@ int main(int argc, char* argv[]) {
 	while (read(fd,c,AGRSIZE) > 0){
 		printf("%s",c);
 	}
-	if (remove("tmp") < 0) {
+	if (remove(fileName) < 0) {
 		perror("Could not delete file");
 	}
 	freeC(inS);
+	free(fileName);
 	return 1;
 	
 }
