@@ -7,11 +7,12 @@
 #define ARTIGOSIZE (IDSIZE+STRINGIDSIZE+PRICESIZE+3) //dois ' ' e um '\n', largura de um artigo
 #define VENDASIZE (IDSIZE+PRICESIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de uma venda
 #define STOCKSIZE (QUANTSIZE+1) //um ' ' e um '\n', largura de um stock
-#define AGRSIZE (IDSIZE+1+PRICESIZE+1+QUANTSIZE+2) //largura de um agregador
+#define AGRSIZE (IDSIZE+1+PRICESIZE+1+QUANTSIZE+1) //largura de um agregador
 #define RESSIZE (AGRSIZE*30) //largura de uma resposta do programa sv, pode conter resposta do programa ag
 #define ARGSIZE (FIFOSIZE+IDSIZE+QUANTSIZE+3) //dois ' ' e um '\n', largura de um argumento do programa cv
 #define PIDSIZE 10 //largura do pid de um cliente
 #define FIFOSIZE (PIDSIZE+11) //largura do fifo de um cliente, inclui "./fifo/fifo" no inicio
+#define CACHESIZE 5
 
 void replaceFileContent(int fd, int offset, int size, char* artigo);
 char* fillZeros(int number, int size);

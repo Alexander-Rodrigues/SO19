@@ -13,111 +13,111 @@
 #include "functions.h"
 typedef void(*sighandler_t)(int);
 
-void freeC(char** c){
-	free(c[0]);
-	free(c[1]);
-	free(c[2]);
-}
-
-//Reads a line in the format, storing the values in the given params
-int readLnC(int fd, char** inS, int* in) {	
-	
-	read(fd, inS[0], IDSIZE);
-	lseek(fd, 1, SEEK_CUR);
-	read(fd, inS[1], PRICESIZE);
-	lseek(fd, 1, SEEK_CUR);
-	int r = read(fd, inS[2], QUANTSIZE);
-	lseek(fd, 1, SEEK_CUR);
-
-	in[0] = atoi(inS[0]);
-	in[1] = atoi(inS[1]);
-	in[2] = atoi(inS[2]);
-
-	return r;
-}
-
-//Returns the file position of the beggining of the line with id;
-off_t getPos(int fd, char* id) {
-
-	off_t end = lseek(fd, 0L, SEEK_END);
-	lseek(fd, 0L, SEEK_SET);
-	off_t r = 0;
-	while(r < end){
-		lseek(fd,r,SEEK_SET);
-		char* c = malloc(sizeof(char)* IDSIZE);
-		read(fd,c,IDSIZE);
-		if (strcmp(c,id) == 0) {
-			
-			return r;
-			lseek(fd,0,SEEK_SET);
-		}
-		r += AGRSIZE;
-	}
-	return r;
+//Attemps to find the Line in which id is, if no match is found returns the line in where the new value.
+int findLn(int fd, int id, int price, int qtd, char* buff){
 	lseek(fd,0,SEEK_SET);
-}
-
-//Replaces the values at pos with the ones at in using s as a string buffer;
-void replace(int fd, off_t pos, int* in, char** s) {
-	
-	lseek(fd,pos,SEEK_SET);
-	int old[3];
-	old[1] = 0;
-	old[2] = 0;
-	sprintf(s[1],"%0*d", PRICESIZE, 0);
-	sprintf(s[2],"%0*d", QUANTSIZE, 0);
-	readLnC(fd, s, old);
-	
-	in[1] += old[1];
-	in[2] += old[2];
-	
-	sprintf(s[1],"%0*d", PRICESIZE, in[1]);
-	sprintf(s[2],"%0*d", QUANTSIZE, in[2]);
-	
-	lseek(fd,pos,SEEK_SET);
-	write(fd, s[0], IDSIZE);
-	write(fd, " ", 1);
-	write(fd, s[1], PRICESIZE);
-	write(fd, " ", 1);
-	write(fd, s[2], QUANTSIZE);
-	write(fd, "\n", 1);
-	
-}
-
-//Reads each line from stdin and for each one searches for its values in the tmp file inserting them;
-int main(int argc, char* argv[]) {
-	char* fileName = malloc(sizeof(char) * 8);
-	sprintf(fileName,"%d",getpid());
-	int fd = open(fileName, O_CREAT | O_RDWR, 0666);
-	if (fd < 0) {
-		perror("Error opening file");
-		return fd;
-	}
-
-	char** inS = malloc(sizeof(char*)*3);
-	inS[0] = malloc(sizeof(char) * IDSIZE);
-	inS[1] = malloc(sizeof(char) * PRICESIZE);
-	inS[2] = malloc(sizeof(char) * QUANTSIZE);
-
-	int intNew[3];
 	int i = 0;
-	while (readLnC(0, inS, intNew) > 0) {
-		int pos = getPos(fd,inS[0]);
-		replace(fd, pos, intNew, inS);
-		lseek(fd,0,SEEK_END);
+	int r;
+	int size = AGRSIZE;
+	while (1) {
+	r = read(fd,buff,AGRSIZE);	
+		
+		if (r < AGRSIZE - 1) {
+			break;
+		}
+		
+		if (atoi(buff) == id) {
+			price += atoi(buff + IDSIZE + 1);
+			qtd += atoi(buff + IDSIZE + PRICESIZE + 2);
+			break;
+		}
+		i++;
+		
+	}
+	lseek(fd,i * size,SEEK_SET);
+	sprintf(buff,"%0*d %0*d %0*d\n",IDSIZE, id, PRICESIZE, price, QUANTSIZE, qtd);
+	write(fd,buff,AGRSIZE);
+	return i;
+}
+
+//Tries to find the value in the cache, if it hits, reads and writes directly.
+//On miss, calls findLn and places the new value on the lowest hit cache spot.
+//In a perfect world I guess it'd never miss huh?
+int tryCache(int fd, int id, int price, int qtd, char* buff, int cache[CACHESIZE][3]) {
+	int i = 0;
+	int pos = -1;
+	int leastHits = cache[0][2];
+	int leastHitPos = -1;
+	int size = AGRSIZE;
+	while (i < CACHESIZE) {
+		//cache hit
+		if (cache[i][0] == id) {
+			cache[i][2] += 1;
+			pos = cache[i][1];
+			
+			lseek(fd,pos * size,SEEK_SET);
+			read(fd,buff,AGRSIZE);
+			price += atoi(buff + IDSIZE + 1);
+			qtd += atoi(buff + IDSIZE + PRICESIZE + 2);
+			lseek(fd,pos * size,SEEK_SET);
+			sprintf(buff,"%0*d %0*d %0*d\n",IDSIZE, id, PRICESIZE, price, QUANTSIZE, qtd);
+			write(fd,buff,AGRSIZE);
+
+			break;
+		}
+		
+		if (cache[i][2] <= leastHits) {
+			leastHits = cache[i][2];
+			leastHitPos = i;
+		}
 		i++;
 	}
-	
-	char c[AGRSIZE];
-	lseek(fd,0L, SEEK_SET);
-	while (read(fd,c,AGRSIZE) > 0){
-		printf("%s",c);
+	//miss or fresh
+	if (pos < 0) {
+		cache[leastHitPos][0] = id;
+		cache[leastHitPos][1] = findLn(fd, id, price, qtd, buff);
+		pos = cache[leastHitPos][1];
+		cache[leastHitPos][2] = 0;
 	}
-	if (remove(fileName) < 0) {
-		perror("Could not delete file");
+	return pos;
+}
+
+//Creates a buffer to read each line from STDIN, opens a file with name PIDSIZE.
+//Creates a CACHESIZEx3 matrix and fills it with -1;(Could be filled with 0s and calloc'ed but prefer it on the stack
+//Reads each line from the STDIN to the buffer, breaks when a line is smaller then it should be
+//Before breaking each value is put on a variable(id, price, qtd).
+//For each line tryCache is called with those 3 values and the buffer;
+//Prints the content from the temp file to stdOut;
+//Note: the same buffer keeps getting used for efficiency.
+int main(int argc, char* argv[]) {
+	char* buff = malloc(sizeof(char) * (AGRSIZE));
+	char tmpName[16]; sprintf(tmpName,"%d",getpid());
+	//change this
+	int tmp = open(tmpName, O_CREAT | O_RDWR, 0666);
+	int r = AGRSIZE;
+
+	int cache[CACHESIZE][3];
+	int i;
+	for (i = 0; i < CACHESIZE; i++) {
+		cache[i][0] = -1;
+		cache[i][1] = -1;
+		cache[i][2] = -1;
 	}
-	freeC(inS);
-	free(fileName);
-	return 1;
-	
+
+	while (1) {
+		r = read(0,buff,AGRSIZE);
+		if (r < AGRSIZE) break;
+		int id = atoi(buff);
+		int price = atoi(buff + IDSIZE + 1);
+		int qtd = atoi(buff + IDSIZE + PRICESIZE + 2);
+		tryCache(tmp, id,  price, qtd, buff, cache);
+	}
+	lseek(tmp,0L, SEEK_SET);
+	while (1) {
+		r = read(tmp,buff,AGRSIZE);
+		if (r < AGRSIZE) break;
+		printf("%s",buff);
+	}
+	free(buff);
+	remove(tmpName);
 }
