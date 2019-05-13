@@ -119,7 +119,7 @@ int main(int argc, char* argv[])
 			close(fd);
 
 			char* res = initString(RESSIZE);//inicializar a string de resposta
-			readUntil(fdMa, 'v', 'v', res);//ler resposta do servidor, a resposta acaba com um caracter 'v'
+			readUntil(fdMa, '\n', '\n', res);//ler resposta do servidor, a resposta acaba com um caracter '\n'
 			close(fdMa);
 			printf("%s\n", res);//imprimir resposta
 

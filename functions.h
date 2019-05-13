@@ -31,4 +31,6 @@ int getStock(char* id);
 int getPrice(char* id);
 void concatVendasLine(int id, int price, int quant, char* venda);
 int atualizaStock(char* id, char* quant);
-int callAg(char* res, int* offset);
+int getOffset();
+void setOffset(int offset);
+int callAg(int* offset);

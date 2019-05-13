@@ -12,8 +12,8 @@ typedef void (*sighandler_t)(int);
 
 int main(int argc, char* argv[])
 {
+	int offset = getOffset(); if(offset<0) {return -1;}
 	int fd = initConnect("./fifo/fifo"); if(fd<0) {return -1;}//conectar ao fifo do servidor
-	int offset = 0;
 	printf("Server running...\n");
 
 	while(1)
@@ -27,9 +27,9 @@ int main(int argc, char* argv[])
 		char* res = initString(RESSIZE);//inicializar a string de resposta
 		if(nArgs==2 && !strcmp(args[0], "./fifo/fifoma"))
 		{
-			int agResult = callAg(res, &offset);//correr ag e obter resposta dado um offset do ficheiro VENDAS
+			int agResult = callAg(&offset);//correr ag e obter resposta dado um offset do ficheiro VENDAS
 			if(agResult<=0) sprintf(res, "Error, try again!\n");
-			res = strcat(res, "v");
+			res = strcat(res, "Done\n");
 		}
 		else if(nArgs==2)
 		{

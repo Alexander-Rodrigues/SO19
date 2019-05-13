@@ -7,6 +7,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <signal.h>
+#include <time.h>
 #include "functions.h"
 typedef void (*sighandler_t)(int);
 
@@ -238,11 +239,36 @@ int atualizaStock(char* id, char* quant)//atualiza o ficheiro STOCKS dependendo 
 	return stock;
 }
 
-int callAg(char* res, int* offset)//corre o programa ag abrindo o ficheiro VENDAS com o dado offset e guarda o resultado em res
+int getOffset()
+{
+	int offsetFd = open("./files/OFFSET", O_RDWR, 0666);
+	if(offsetFd<=0)
+	{
+		offsetFd = open("./files/OFFSET", O_RDWR|O_CREAT, 0666); if(offsetFd<=0) return -1;
+		write(offsetFd, "0\n", 2);
+	}
+	char* offsetS = initString(30);
+	int readResult = readUntil(offsetFd, '\n', '\n', offsetS); if(readResult<0) {return -1;}
+	close(offsetFd);
+	int offset = atoi(offsetS);
+	free(offsetS);
+	return offset;
+}
+
+void setOffset(int offset)
+{
+	int offsetFd = open("./files/OFFSET", O_RDWR|O_CREAT, 0666);
+	char* offsetS = initString(30);
+	sprintf(offsetS, "%d", offset);
+	addNewLine(offsetS);
+	write(offsetFd, offsetS, strlen(offsetS));
+	free(offsetS);
+	close(offsetFd);
+}
+
+int callAg(int* offset)//corre o programa ag abrindo o ficheiro VENDAS com o dado offset e guarda o resultado em res
 {
 	int status = 0;
-	int fd2[2];
-	pipe(fd2);
 	int pid = fork();
 
 	if(!pid)//filho
@@ -252,25 +278,27 @@ int callAg(char* res, int* offset)//corre o programa ag abrindo o ficheiro VENDA
 		dup2(fdVendas,0);//torna o file descriptor do ficheiro VENDAS no input, assim o seu conteúdo é processado pelo programa ag
 		close(fdVendas);
 
-		close(fd2[0]);//torna o pipe write no output, assim envia o resultado ao processo pai
-		dup2(fd2[1],1);
-		close(fd2[1]);
+		time_t t = time(0);
+    	char * timeS = ctime(&t);
+    	timeS[strlen(timeS)-1] = '\0';
+    	char* timeFile = initString(strlen(timeS)+10);
+		sprintf(timeFile, "./files/%s", timeS);
+		int fdNew = open(timeFile, O_WRONLY|O_APPEND|O_CREAT, 0666); if(fdNew<=0) return 0;
+		free(timeFile);
+		dup2(fdNew,1);//torna o fdNew no output, assim envia o resultado ao fdNew
 
 		execl("./ag", "./ag", NULL);
 		_exit(-1);//error
 	}
 	else//pai
 	{
-		close(fd2[1]);
 		wait(&status);
 		if(WIFEXITED(status)) {int exitcode = WEXITSTATUS(status); if(exitcode==-1) return 0;}//tratar de erros do processo filho
-		readUntil(fd2[0],'v','v', res);//escreve em res o resultado que veio do processo filho
 
 		int fdVendas = openVendas(O_RDONLY|O_CREAT);
 		*offset = lseek(fdVendas, 0, SEEK_END);
 		close(fdVendas);
-
-		close(fd2[0]);
+		setOffset(*offset);
 	}
 
 	return 1;
